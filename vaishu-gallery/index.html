@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#09070e">
+  <meta name="description" content="A little floating gallery of favorite memories for Vaishu.">
+  <title>Vaishu’s Little Universe — Photo Gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --night: #09070e;
+      --lavender: #cfb8ff;
+      --lilac: #a987df;
+      --soft-lilac: #eee7ff;
+      --glass: rgba(25, 18, 39, .82);
+      --card-width: clamp(108px, 12vw, 164px);
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--night); }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      color: #f3effa;
+      background-color: var(--night);
+      background-image: linear-gradient(180deg, rgba(7, 5, 12, .38), rgba(7, 5, 12, .78)), url("../assets/butterfly-garden.jpg");
+      background-position: center 12%;
+      background-size: cover;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+      font-family: "Nunito", "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { color: inherit; font: inherit; }
+    a { color: inherit; text-decoration: none; }
+    .page-shell { width: min(100%, 76rem); margin: 0 auto; padding: 1.25rem clamp(1rem, 4vw, 3rem) 2rem; }
+    .topline { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .back-link, .gallery-kicker, .photo-count { color: rgba(235, 226, 255, .75); font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    .back-link { display: inline-flex; align-items: center; gap: .55rem; transition: color .2s ease; }
+    .back-link:hover { color: #fff; }
+    .top-mark { color: var(--lavender); font-size: 1.3rem; text-shadow: 0 0 18px rgba(201, 167, 255, .7); }
+    .intro { position: relative; z-index: 2; margin: 2.5rem auto 0; text-align: center; }
+    .gallery-kicker { margin: 0 0 .6rem; color: #cfb8ff; }
+    h1 { margin: 0; font-family: "Quicksand", "Nunito", sans-serif; font-size: clamp(2.6rem, 7vw, 5.2rem); font-weight: 700; letter-spacing: -.055em; line-height: 1.02; }
+    h1 span { color: var(--lavender); text-shadow: 0 0 28px rgba(201, 167, 255, .5); }
+    .intro-copy { width: min(100%, 34rem); margin: .85rem auto 0; color: rgba(243, 239, 250, .78); font-size: clamp(.95rem, 1.5vw, 1.08rem); line-height: 1.65; }
+    .gallery-scene {
+      position: relative;
+      width: 100vw;
+      height: min(70vh, 680px);
+      min-height: 560px;
+      margin: .45rem 0 0 calc(50% - 50vw);
+      perspective: 1100px;
+      transform-style: preserve-3d;
+    }
+    .gallery-scene::before {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: min(38rem, 80vw);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(115, 76, 164, .3), rgba(38, 24, 57, .14) 45%, transparent 72%);
+      content: "";
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+    }
+    .memory-launch {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      left: 50%;
+      width: var(--card-width);
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(.05);
+      transform-style: preserve-3d;
+      visibility: hidden;
+    }
+    .gallery-scene.is-burst .memory-launch {
+      animation: photo-burst 1.05s cubic-bezier(.18, .82, .24, 1) var(--delay) both;
+    }
+    .memory-card {
+      position: relative;
+      display: block;
+      width: 100%;
+      aspect-ratio: .76;
+      overflow: hidden;
+      padding: .38rem;
+      border: 1px solid rgba(221, 207, 247, .58);
+      border-radius: 15px;
+      background: linear-gradient(145deg, rgba(58, 41, 82, .96), rgba(14, 10, 23, .96));
+      box-shadow: 0 14px 38px rgba(0, 0, 0, .44), 0 0 22px rgba(169, 135, 223, .16), inset 0 1px rgba(255,255,255,.12);
+      cursor: default;
+      transform-style: preserve-3d;
+    }
+    .memory-card.photo-wide { aspect-ratio: 1.3; }
+    .gallery-scene.is-burst .memory-card { animation: photo-float 5.4s ease-in-out calc(var(--delay) + 1.05s) infinite; }
+    .memory-card:disabled { opacity: 1; }
+    .memory-card.has-photo { cursor: zoom-in; }
+    .photo-placeholder, .memory-card img {
+      position: absolute;
+      inset: .38rem;
+      width: calc(100% - .76rem);
+      height: calc(100% - .76rem);
+      border-radius: 10px;
+    }
+    .photo-placeholder {
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: .25rem;
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 40%, rgba(145, 109, 193, .38), transparent 62%), linear-gradient(155deg, #211731, #0d0a13 72%);
+      color: rgba(235, 226, 255, .8);
+      text-align: center;
+    }
+    .photo-placeholder::before, .photo-placeholder::after { position: absolute; width: 3rem; height: 3rem; border: 1px solid rgba(207, 184, 255, .14); border-radius: 50%; content: ""; }
+    .photo-placeholder::before { top: -1.4rem; left: -1.2rem; }
+    .photo-placeholder::after { right: -1rem; bottom: -1.4rem; width: 4rem; height: 4rem; }
+    .photo-placeholder strong { position: relative; z-index: 1; color: #cfb8ff; font-family: "Quicksand", sans-serif; font-size: 1.9rem; font-weight: 700; text-shadow: 0 0 18px rgba(201, 167, 255, .55); }
+    .photo-placeholder span { position: relative; z-index: 1; font-size: .6rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .memory-card img { display: none; object-fit: cover; }
+    .memory-card.photo-wide img { object-fit: contain; background: #09070e; }
+    .memory-card.photo-art img { object-fit: contain; background: #000; }
+    .memory-card.has-photo img { display: block; }
+    .memory-card.has-photo .photo-placeholder { display: none; }
+    .heart-button {
+      position: absolute;
+      z-index: 5;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      width: 10rem;
+      height: 10rem;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+      transform-style: preserve-3d;
+    }
+    .heart-halo { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(180, 139, 235, .28), rgba(111, 73, 158, .1) 42%, transparent 72%); filter: blur(7px); animation: halo-breathe 3.6s ease-in-out infinite; }
+    .heart-3d { position: relative; width: 5rem; height: 5rem; transform-style: preserve-3d; animation: heart-hover 3.8s ease-in-out infinite; }
+    .heart-depth, .heart-face { position: absolute; top: 50%; left: 50%; width: 4.8rem; height: 4.8rem; margin: -2.4rem; border-radius: 12px; transform: rotate(-45deg); }
+    .heart-depth { background: #553879; box-shadow: inset -4px -5px 0 rgba(0, 0, 0, .2); transform: rotate(-45deg) translateZ(-13px) translateY(7px); }
+    .heart-face { background: linear-gradient(145deg, #e1d5ff 0%, #b692ef 38%, #8056b4 100%); box-shadow: inset 7px 5px 13px rgba(255, 255, 255, .34), inset -8px -10px 18px rgba(44, 25, 71, .42); }
+    .heart-depth::before, .heart-depth::after, .heart-face::before, .heart-face::after { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: inherit; content: ""; }
+    .heart-depth::before, .heart-face::before { top: -50%; left: 0; }
+    .heart-depth::after, .heart-face::after { top: 0; left: 50%; }
+    .heart-face::before, .heart-face::after { box-shadow: inset 4px 2px 9px rgba(255,255,255,.18); }
+    .heart-label { position: absolute; bottom: -.1rem; left: 50%; width: max-content; color: #eee7ff; font-size: .62rem; font-weight: 800; letter-spacing: .17em; text-shadow: 0 2px 12px #09070e; text-transform: uppercase; transform: translateX(-50%); }
+    .heart-button:focus-visible, .back-link:focus-visible, .viewer-close:focus-visible { outline: 2px solid #fff; outline-offset: 5px; }
+    .replay-row { position: relative; z-index: 6; display: flex; align-items: center; justify-content: center; gap: 1rem; margin: -1rem auto 0; text-align: center; }
+    .replay-button { padding: .65rem 1rem; border: 1px solid rgba(207, 184, 255, .38); border-radius: 999px; background: rgba(25, 18, 39, .76); color: #eee7ff; font-size: .74rem; font-weight: 700; letter-spacing: .06em; cursor: pointer; backdrop-filter: blur(10px); transition: background .2s ease, transform .2s ease; }
+    .replay-button:hover { background: rgba(87, 62, 120, .72); transform: translateY(-2px); }
+    .photo-count { margin: 0; font-size: .65rem; }
+    .closer { margin: .9rem auto 0; color: rgba(243, 239, 250, .62); font-size: .76rem; text-align: center; }
+    .photo-viewer { width: min(92vw, 52rem); max-width: none; max-height: 90vh; padding: .8rem; border: 1px solid rgba(221, 207, 247, .48); border-radius: 18px; background: var(--glass); box-shadow: 0 20px 80px rgba(0, 0, 0, .6), 0 0 32px rgba(169, 135, 223, .2); }
+    .photo-viewer::backdrop { background: rgba(5, 4, 10, .82); backdrop-filter: blur(12px); }
+    .photo-viewer img { display: block; max-width: 100%; max-height: 78vh; margin: 0 auto; border-radius: 10px; object-fit: contain; }
+    .viewer-close { position: absolute; top: 1.1rem; right: 1.1rem; display: grid; width: 2.5rem; height: 2.5rem; place-items: center; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; background: rgba(9, 7, 14, .72); color: white; font-size: 1.4rem; cursor: pointer; }
+    @keyframes photo-burst {
+      0% { visibility: visible; opacity: 0; transform: translate(-50%, -50%) scale(.04) rotate(0); }
+      24% { opacity: 1; }
+      100% { visibility: visible; opacity: 1; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--tilt)); }
+    }
+    @keyframes photo-float { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-9px) rotate(1.2deg); } }
+    @keyframes heart-hover { 0%,100% { transform: rotateX(10deg) rotateY(-8deg) translateY(0); } 50% { transform: rotateX(16deg) rotateY(8deg) translateY(-7px); } }
+    @keyframes heart-pop { 0% { transform: scale(.84); } 45% { transform: scale(1.16); } 75% { transform: scale(.96); } 100% { transform: scale(1); } }
+    @keyframes halo-breathe { 0%,100% { opacity: .62; transform: scale(.92); } 50% { opacity: 1; transform: scale(1.12); } }
+    .gallery-scene.is-burst .heart-button { animation: heart-pop .72s cubic-bezier(.2,.8,.2,1) both; }
+    @media (max-width: 620px) {
+      .page-shell { padding-top: 1rem; }
+      .intro { margin-top: 1.8rem; }
+      .intro-copy { max-width: 22rem; }
+      .gallery-scene { height: 68vh; min-height: 560px; margin-top: .6rem; }
+      :root { --card-width: clamp(86px, 22vw, 100px); }
+      .memory-card { border-radius: 12px; padding: .28rem; }
+      .photo-placeholder, .memory-card img { inset: .28rem; width: calc(100% - .56rem); height: calc(100% - .56rem); border-radius: 8px; }
+      .photo-placeholder strong { font-size: 1.55rem; }
+      .photo-placeholder span { font-size: .5rem; }
+      .memory-launch:nth-child(1) { --dx: -22vw !important; --dy: -27vh !important; }
+      .memory-launch:nth-child(2) { --dx: 0vw !important; --dy: -27vh !important; }
+      .memory-launch:nth-child(3) { --dx: 22vw !important; --dy: -27vh !important; }
+      .memory-launch:nth-child(4) { --dx: -38vw !important; --dy: -9vh !important; }
+      .memory-launch:nth-child(5) { --dx: 38vw !important; --dy: -9vh !important; }
+      .memory-launch:nth-child(6) { --dx: -38vw !important; --dy: 9vh !important; }
+      .memory-launch:nth-child(7) { --dx: 38vw !important; --dy: 9vh !important; }
+      .memory-launch:nth-child(8) { --dx: -22vw !important; --dy: 27vh !important; }
+      .memory-launch:nth-child(9) { --dx: 0vw !important; --dy: 27vh !important; }
+      .memory-launch:nth-child(10) { --dx: 22vw !important; --dy: 27vh !important; }
+      .heart-button { width: 8rem; height: 8rem; }
+      .heart-3d { transform: scale(.82); }
+      .replay-row { margin-top: -.4rem; flex-direction: column; gap: .55rem; }
+      .closer { max-width: 20rem; line-height: 1.55; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      .memory-launch { visibility: visible; opacity: 1; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--tilt)); }
+      .memory-card { animation: none !important; }
+    }
+    html.embed-mode, html.embed-mode body { width: 100%; height: 100%; min-height: 100%; overflow: hidden; }
+    .embed-mode .page-shell { width: 100%; height: 100svh; padding: 4.3rem 0 .35rem; }
+    .embed-mode .topline { display: none; }
+    .embed-mode .intro { margin-top: .35rem; padding: 0 1rem; }
+    .embed-mode .gallery-kicker { margin-bottom: .35rem; font-size: .6rem; }
+    .embed-mode h1 { font-size: clamp(2rem, 5vw, 3.7rem); }
+    .embed-mode .intro-copy { max-width: 34rem; margin-top: .45rem; font-size: .86rem; line-height: 1.4; }
+    .embed-mode .gallery-scene { height: 58svh; min-height: 420px; max-height: 540px; margin-top: 0; }
+    .embed-mode .replay-row { gap: .7rem; margin-top: -.55rem; }
+    .embed-mode .replay-button { padding: .52rem .85rem; font-size: .68rem; }
+    .embed-mode .closer { margin-top: .4rem; padding: 0 .8rem; font-size: .68rem; }
+    @media (max-width: 620px) {
+      .embed-mode .page-shell { padding-top: 4.15rem; }
+      .embed-mode .intro { margin-top: .1rem; }
+      .embed-mode h1 { font-size: clamp(1.9rem, 8vw, 3rem); }
+      .embed-mode .intro-copy { max-width: 22rem; font-size: .76rem; }
+      .embed-mode .gallery-scene { height: 70svh; min-height: 500px; max-height: 580px; margin-top: .1rem; }
+      .embed-mode .replay-row { flex-direction: row; margin-top: -.65rem; }
+      .embed-mode .photo-count { font-size: .56rem; }
+      .embed-mode .closer { max-width: 24rem; line-height: 1.35; }
+    }
+  </style>
+  <script>
+    if (new URLSearchParams(window.location.search).has("embed")) {
+      document.documentElement.classList.add("embed-mode");
+    }
+  </script>
+</head>
+<body>
+  <main class="page-shell">
+    <div class="topline">
+      <a class="back-link" href="../our-love-story-v2.html"><span aria-hidden="true">←</span> Back to our story</a>
+      <span class="top-mark" aria-hidden="true">✦</span>
+    </div>
+    <header class="intro">
+      <p class="gallery-kicker">A little universe, just for you</p>
+      <h1>Vaishu’s <span>memories</span> ♡</h1>
+      <p class="intro-copy">Ten little places for the moments I want to keep close. Tap the heart and let them float around us.</p>
+    </header>
+
+    <section class="gallery-scene is-burst" id="galleryScene" aria-label="Ten floating photo frames around a three-dimensional heart">
+      <div class="memory-launch" style="--dx:-27vw;--dy:-15vh;--tilt:-8deg;--delay:.12s">
+        <button class="memory-card photo-art" type="button" disabled aria-label="Photo 1">
+          <span class="photo-placeholder"><strong>01</strong><span>Add her photo</span></span>
+          <img src="photos/photo-01.png" alt="Us together inside a black photo frame decorated with pink hearts and brushstroke corners" loading="eager">
+        </button>
+      </div>
+      <div class="memory-launch" style="--dx:-9vw;--dy:-18vh;--tilt:6deg;--delay:.2s">
+        <button class="memory-card" type="button" disabled aria-label="Photo 2">
+          <span class="photo-placeholder"><strong>02</strong><span>Add her photo</span></span>
+          <img src="photos/photo-02.jpg" alt="Mirror selfie of Vaishu in a white outfit with pink hair bows" loading="eager">
+        </button>
+      </div>
+      <div class="memory-launch" style="--dx:9vw;--dy:-18vh;--tilt:-5deg;--delay:.28s">
+        <button class="memory-card" type="button" disabled aria-label="Photo 3">
+          <span class="photo-placeholder"><strong>03</strong><span>Add her photo</span></span>
+          <img src="photos/photo-03.jpg" alt="Close-up of Vaishu’s jeweled earrings in a retro camcorder-style photo" loading="eager">
+        </button>
+      </div>
+      <div class="memory-launch" style="--dx:27vw;--dy:-15vh;--tilt:8deg;--delay:.36s">
+        <button class="memory-card" type="button" disabled aria-label="Photo 4">
+          <span class="photo-placeholder"><strong>04</strong><span>Add her photo</span></span>
+          <img src="photos/photo-04.jpg" alt="Close-up portrait of Vaishu wearing dark sunglasses and a striped shirt" loading="eager">
+        </button>
+      </div>
+      <div class="memory-launch" style="--dx:-42vw;--dy:-1vh;--tilt:5deg;--delay:.44s">
+        <button class="memory-card" type="button" disabled aria-label="Photo 5">
+          <span class="photo-placeholder"><strong>05</strong><span>Add her photo</span></span>
+          <img src="photos/photo-05.jpg" alt="Vaishu taking a mirror selfie in a striped shirt and dark sunglasses" loading="eager">
+        </button>
+      </div>
+      <div class="memory-launch" style="--dx:42vw;--dy:-1vh;--tilt:-5deg;--delay:.52s">
+        <button class="memory-card photo-wide" type="button" disabled aria-label="Photo 6">
+          <span class="photo-placeholder"><strong>06</strong><span>Add her photo</span></span>
+          <img src="photos/photo-06.jpg" alt="Us posing with thumbs up and wearing sunglasses" loading="eager">
+        </button>
+      </div>
+      <div class="memory-launch" style="--dx:-27vw;--dy:15vh;--tilt:-6deg;--delay:.6s">
+        <button class="memory-card" type="button" disabled aria-label="Photo 7">
+          <span class="photo-placeholder"><strong>07</strong><span>Add her photo</span></span>
+          <img src="photos/photo-07.jpg" alt="A candid late-night car photo" loading="eager">
+        </button>
+      </div>
+      <div class="memory-launch" style="--dx:-9vw;--dy:18vh;--tilt:7deg;--delay:.68s">
+        <button class="memory-card photo-wide" type="button" disabled aria-label="Photo 8">
+          <span class="photo-placeholder"><strong>08</strong><span>Add her photo</span></span>
+          <img src="photos/photo-08.jpg" alt="A close-up selfie of us wearing sunglasses" loading="eager">
+        </button>
+      </div>
+      <div class="memory-launch" style="--dx:9vw;--dy:18vh;--tilt:-7deg;--delay:.76s">
+        <button class="memory-card photo-wide" type="button" disabled aria-label="Photo 9">
+          <span class="photo-placeholder"><strong>09</strong><span>Add her photo</span></span>
+          <img src="photos/photo-09.jpg" alt="Vaishu playfully covering her smile while we sit together" loading="eager">
+        </button>
+      </div>
+      <div class="memory-launch" style="--dx:27vw;--dy:15vh;--tilt:6deg;--delay:.84s">
+        <button class="memory-card photo-wide" type="button" disabled aria-label="Photo 10">
+          <span class="photo-placeholder"><strong>10</strong><span>Add her photo</span></span>
+          <img src="photos/photo-10.jpg" alt="Black-and-white playful photo of us together" loading="eager">
+        </button>
+      </div>
+
+      <button class="heart-button" id="heartButton" type="button" aria-label="Pop the heart and release the photos">
+        <span class="heart-halo" aria-hidden="true"></span>
+        <span class="heart-3d" aria-hidden="true"><span class="heart-depth"></span><span class="heart-face"></span></span>
+        <span class="heart-label" aria-hidden="true">tap to bloom</span>
+      </button>
+    </section>
+
+    <div class="replay-row">
+      <button class="replay-button" id="replayButton" type="button">Let the memories float again ✦</button>
+      <p class="photo-count">10 little moments</p>
+    </div>
+    <p class="closer">Tap a photo to see it up close. ♡</p>
+  </main>
+
+  <dialog class="photo-viewer" id="photoViewer" aria-label="View memory photo">
+    <button class="viewer-close" id="viewerClose" type="button" aria-label="Close photo">×</button>
+    <img id="viewerImage" alt="Expanded memory photo">
+  </dialog>
+
+  <script>
+    (function () {
+      "use strict";
+      var scene = document.getElementById("galleryScene");
+      var replayButton = document.getElementById("replayButton");
+      var heartButton = document.getElementById("heartButton");
+      var viewer = document.getElementById("photoViewer");
+      var viewerImage = document.getElementById("viewerImage");
+      var viewerClose = document.getElementById("viewerClose");
+      var cards = Array.prototype.slice.call(document.querySelectorAll(".memory-card"));
+
+      function replayBurst() {
+        scene.classList.remove("is-burst");
+        void scene.offsetWidth;
+        scene.classList.add("is-burst");
+      }
+
+      cards.forEach(function (card) {
+        var photo = card.querySelector("img");
+        function activatePhoto() {
+          card.classList.add("has-photo");
+          card.disabled = false;
+        }
+        photo.addEventListener("load", activatePhoto);
+        if (photo.complete && photo.naturalWidth > 0) activatePhoto();
+        photo.addEventListener("error", function () {
+          photo.remove();
+        });
+        card.addEventListener("click", function () {
+          if (!card.classList.contains("has-photo")) return;
+          viewerImage.src = photo.src;
+          viewerImage.alt = photo.alt;
+          viewer.showModal();
+        });
+      });
+
+      replayButton.addEventListener("click", replayBurst);
+      heartButton.addEventListener("click", replayBurst);
+      viewerClose.addEventListener("click", function () { viewer.close(); });
+      viewer.addEventListener("click", function (event) {
+        if (event.target === viewer) viewer.close();
+      });
+    }());
+  </script>
+</body>
+</html>
